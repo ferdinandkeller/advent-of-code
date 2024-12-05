@@ -45,8 +45,8 @@ def part1(puzzle: str):
 
 def get_rules_map(rules: list[tuple[int, int]]) -> dict[int, set[int]]:
     # for each page, we create a set of the rules they are part of
-    # that way we can intersect those sets to find the rules that
-    # apply to two pages
+    # that way we can intersect those sets to efficiently find
+    # the rules that apply to two given pages
     rules_map = {}
     for i, (p1, p2) in enumerate(rules):
         if p1 not in rules_map:
@@ -58,38 +58,47 @@ def get_rules_map(rules: list[tuple[int, int]]) -> dict[int, set[int]]:
     return rules_map
 
 
-def get_rules_sorting_key(rules: list[tuple[int, int]]):
+def get_rule(
+    rules: list[tuple[int, int]], rules_map: dict[int, set[int]], p1: int, p2: int
+) -> tuple[int, int] | None:
+    p1_rules = rules_map.get(p1)
+    p2_rules = rules_map.get(p2)
+    if p1_rules is None or p2_rules is None:
+        return None  # at least one of the pages is not part of any rule
+    common_rules = p1_rules.intersection(p2_rules)
+    if len(common_rules) == 0:
+        return None  # no rule applies to both pages
+    elif len(common_rules) == 1:
+        return rules[common_rules.pop()]  # one rule applies to both pages
+    else:
+        # should not happen, we should have only one rule
+        raise Exception("Multiple rules found")
+
+
+def get_sorting_key_function(rules: list[tuple[int, int]]):
     rules_map = get_rules_map(rules)
 
-    def get_key(p1: int, p2: int) -> int:
-        p1_rules = rules_map[p1]
-        p2_rules = rules_map[p2]
-        intersection_rules = p1_rules.intersection(p2_rules)
-        if len(intersection_rules) == 0:
-            # no rule applies to both pages
-            # we don't care about the order
-            return 0
-        elif len(intersection_rules) == 1:
-            # one rule applies to both pages, we retrieve it
-            (first_page, _) = rules[intersection_rules.pop()]
-            if first_page == p1:
-                return -1  # keep p1 first
-            else:
-                return 1  # switch p2 first
+    def compare_pages(p1: int, p2: int) -> int:
+        rule = get_rule(rules, rules_map, p1, p2)
+        if rule is None:
+            return 0  # no rule applies to both pages, we don't care about the order
+        (first_page, _) = rule
+        if first_page == p1:
+            return -1  # keep p1 first
         else:
-            # should not happen
-            raise Exception("Multiple rules found")
+            return 1  # switch p2 first
 
-    return cmp_to_key(get_key)
+    return cmp_to_key(compare_pages)
 
 
 def verify_updates_and_fix(
     updates: list[list[int]], rules: list[tuple[int, int]]
 ) -> int:
     total = 0
+    sorting_key_function = get_sorting_key_function(rules)
     for update in updates:
         if not verify_update(update, rules):
-            update_sorted = sorted(update, key=get_rules_sorting_key(rules))
+            update_sorted = sorted(update, key=sorting_key_function)
             total += update_sorted[len(update_sorted) // 2]
     return total
 
