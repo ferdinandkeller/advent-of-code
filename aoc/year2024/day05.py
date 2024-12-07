@@ -1,6 +1,7 @@
 import re
 from loguru import logger
 from functools import cmp_to_key
+from collections import defaultdict
 
 
 def parse_rules(rules: str) -> list[tuple[int, int]]:
@@ -47,18 +48,14 @@ def get_rules_map(rules: list[tuple[int, int]]) -> dict[int, set[int]]:
     # for each page, we create a set of the rules they are part of
     # that way we can intersect those sets to efficiently find
     # the rules that apply to two given pages
-    rules_map = {}
+    rules_map = defaultdict(set)
     for i, (p1, p2) in enumerate(rules):
-        if p1 not in rules_map:
-            rules_map[p1] = set()
         rules_map[p1].add(i)
-        if p2 not in rules_map:
-            rules_map[p2] = set()
         rules_map[p2].add(i)
     return rules_map
 
 
-def get_rule(
+def get_common_rule(
     rules: list[tuple[int, int]], rules_map: dict[int, set[int]], p1: int, p2: int
 ) -> tuple[int, int] | None:
     p1_rules = rules_map.get(p1)
@@ -79,7 +76,7 @@ def get_sorting_key_function(rules: list[tuple[int, int]]):
     rules_map = get_rules_map(rules)
 
     def compare_pages(p1: int, p2: int) -> int:
-        rule = get_rule(rules, rules_map, p1, p2)
+        rule = get_common_rule(rules, rules_map, p1, p2)
         if rule is None:
             return 0  # no rule applies to both pages, we don't care about the order
         (first_page, _) = rule
