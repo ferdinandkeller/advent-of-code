@@ -9,58 +9,60 @@ def parse_puzzle(puzzle: str) -> list[tuple[int, list[int]]]:
     return out
 
 
-def computable(total: int, numbers: list[int]) -> bool:
+def adds_up_correctly(total: int, numbers: list[int]) -> bool:
     if len(numbers) == 0:
         return total == 0
     latest = numbers.pop()
     if total % latest == 0:
-        if computable(total // latest, numbers.copy()):
+        if adds_up_correctly(total // latest, numbers.copy()):
             return True
     if total - latest >= 0:
-        if computable(total - latest, numbers.copy()):
+        if adds_up_correctly(total - latest, numbers.copy()):
             return True
     return False
 
 
-def computables(puzzle: list[tuple[int, list[int]]]) -> int:
-    total_computable = 0
+def solve_equations(puzzle: list[tuple[int, list[int]]]) -> int:
+    total_calibration = 0
     for total, numbers in puzzle:
-        if computable(total, numbers):
-            total_computable += total
-    return total_computable
+        if adds_up_correctly(total, numbers):
+            total_calibration += total
+    return total_calibration
 
 
 def part1(puzzle: str):
     puzzle = parse_puzzle(puzzle)
-    total_computable = computables(puzzle)
-    logger.success(f"Total computable: {total_computable}")
+    total_calibration = solve_equations(puzzle)
+    logger.success(f"Total calibration: {total_calibration}")
 
 
-def computable2(total: int, numbers: list[int]) -> bool:
+def adds_up_correctly2(total: int, numbers: list[int]) -> bool:
     if len(numbers) == 0:
         return total == 0
     latest = numbers.pop()
     if total % latest == 0:
-        if computable2(total // latest, numbers.copy()):
+        if adds_up_correctly2(total // latest, numbers.copy()):
             return True
     if total - latest >= 0:
-        if computable2(total - latest, numbers.copy()):
+        if adds_up_correctly2(total - latest, numbers.copy()):
             return True
     if (total - latest) % 10 ** len(str(latest)) == 0:
-        if computable2((total - latest) // 10 ** len(str(latest)), numbers.copy()):
+        if adds_up_correctly2(
+            (total - latest) // 10 ** len(str(latest)), numbers.copy()
+        ):
             return True
     return False
 
 
-def computables2(puzzle: list[tuple[int, list[int]]]) -> int:
-    total_computable = 0
+def solve_equations2(puzzle: list[tuple[int, list[int]]]) -> int:
+    total_calibration = 0
     for total, numbers in puzzle:
-        if computable2(total, numbers):
-            total_computable += total
-    return total_computable
+        if adds_up_correctly2(total, numbers):
+            total_calibration += total
+    return total_calibration
 
 
 def part2(puzzle: str):
     puzzle = parse_puzzle(puzzle)
-    total_computable = computables2(puzzle)
-    logger.success(f"Total computable: {total_computable}")
+    total_calibration = solve_equations2(puzzle)
+    logger.success(f"Total calibration: {total_calibration}")
